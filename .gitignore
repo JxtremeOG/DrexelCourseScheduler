@@ -4,6 +4,9 @@
 /node_modules
 /frontend/node_modules
 /frontend/public/courseJsons
+/backend/bin
+/backend/logs
+/backend/obj
 /.pnp
 .pnp.js
 
