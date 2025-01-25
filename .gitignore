@@ -7,6 +7,8 @@
 /backend/bin
 /backend/logs
 /backend/obj
+/DrexelCourseScheduler.Tests/bin
+/DrexelCourseScheduler.Tests/obj
 /.pnp
 .pnp.js
 
