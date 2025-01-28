@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { arrayMove } from '@dnd-kit/sortable';
 
-export const useDragAndDrop = ({ terms, filteredResults, setFilteredResults, setDisplayRemoveCourse, updateTerms }) => {
+export const useDragAndDrop = ({ terms, filteredResults, setFilteredResults, setDisplayRemoveCourse, updateTerms, sendCourseUpdateToBackend }) => {
   const [activeId, setActiveId] = useState(null);
   const [activeCourse, setActiveCourse] = useState(null);
 
@@ -136,6 +136,7 @@ export const useDragAndDrop = ({ terms, filteredResults, setFilteredResults, set
         updatedTerms[sourceTermIndex].courses = updatedTerms[sourceTermIndex].courses.filter(
           (c) => c.id !== activeIdStr
         );
+        sendCourseUpdateToBackend("Course is deleted", course, -1, sourceTermIndex);
         updateTerms(updatedTerms);
       } else {
         // Remove the course from filteredResults if it's already in SearchResults
@@ -178,6 +179,7 @@ export const useDragAndDrop = ({ terms, filteredResults, setFilteredResults, set
         }
         // Add to destination
         updatedTerms[destinationTermIndexFallback].courses.push(course);
+        sendCourseUpdateToBackend("Course is being moved (on course)", course, destinationTermIndexFallback, sourceTermIndex);
         updateTerms(updatedTerms);
       }
     }
@@ -217,6 +219,7 @@ export const useDragAndDrop = ({ terms, filteredResults, setFilteredResults, set
         const overIndex = destinationCourses.findIndex((c) => c.id === overIdStr);
         destinationCourses.splice(overIndex, 0, course);
         updatedTerms[destinationTermIndex].courses = destinationCourses;
+        sendCourseUpdateToBackend("Course is being moved (on term)", course, destinationTermIndex, sourceTermIndex);
         updateTerms(updatedTerms);
       }
     }

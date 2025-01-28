@@ -22,6 +22,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Backend\Backend.csproj" />
+    <None Include="..\Backend\courseJsons\masterJsons.json">
+      <Link>courseJsons\masterJsons.json</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

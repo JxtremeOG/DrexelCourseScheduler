@@ -9,9 +9,16 @@ builder.Host.UseSerilog((context, configuration) =>
 });
 
 // Add services to the container
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSingleton<FileReader>();
+builder.Services.AddSingleton<ScheduleModel>();
+builder.Services.AddSingleton<RequisitesHandler>();
 
 // Enable CORS
 builder.Services.AddCors(options =>

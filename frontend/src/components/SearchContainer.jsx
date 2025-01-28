@@ -6,7 +6,7 @@ import SearchResults from './SearchResults';
 import { verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { SortableContext } from '@dnd-kit/sortable';
 import { generateUniqueId } from '../utils/generateUniqueId';
-import { useCallback } from 'react';
+import { transformCourse } from '../utils/CourseTransform';
 
 const SearchContainer = ({filteredResults, setFilteredResults, displayRemoveCourse}) => {
 
@@ -56,19 +56,12 @@ const SearchContainer = ({filteredResults, setFilteredResults, displayRemoveCour
             return response.json();
         })
         .then((data) => {
-            const coursesArray = Object.values(data).map((course) => ({
-                ...course,
-                id: course.id || generateUniqueId(), // Use existing id or generate a new one
-            }));
+            const coursesArray = Object.values(data).map(transformCourse);
             setCoursesData(coursesArray);
         })
         .catch((error) => {
             console.error('Error fetching courses data:', error);
         });
-    }, []);
-
-    const memoizedGenerateUniqueId = useCallback(() => {
-        return generateUniqueId();
     }, []);
 
     return (

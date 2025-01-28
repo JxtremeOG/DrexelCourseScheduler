@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import ReactModal from 'react-modal'
 
-const StartSettings = ({ isStartModalOpen, setIsStartModalOpen, setTerms }) => {
+const StartSettings = ({ isStartModalOpen, setIsStartModalOpen, setTerms, sendTermsToBackend }) => {
 
     const schedules = [{
         id: 1,
@@ -47,6 +47,7 @@ const StartSettings = ({ isStartModalOpen, setIsStartModalOpen, setTerms }) => {
             })
         }
         setTerms(tempTerms)
+        sendTermsToBackend("Initializing schedule" ,tempTerms)
         setIsStartModalOpen(false)
     }
 

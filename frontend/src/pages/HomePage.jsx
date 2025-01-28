@@ -19,7 +19,8 @@ import CourseInfo from '../components/CourseInfo';
 import StartSettings from '../components/StartSettings';
 import { FaTrashRestore } from "react-icons/fa";
 import { useDragAndDrop } from '../utils/DragHandling';
-import { useEffect } from 'react';
+import { sendTermsToBackend } from '../services/apiService';
+import { sendCourseUpdateToBackend } from '../services/apiService';
 
 ReactModal.setAppElement("#root");
 
@@ -43,56 +44,27 @@ const HomePage = () => {
     });
     setTerms(updatedTerms);
   
-    try {
-      // Send the terms to the backend as a plain string
-      const response = await fetch('http://localhost:5191/api/example', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify("Test Message"), // Send a simple string
-      });
+    // try {
+    //   // Send the terms to the backend as a plain string
+    //   const response = await fetch('http://localhost:5191/api/example', {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify("Test Message"), // Send a simple string
+    //   });
   
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+    //   if (!response.ok) {
+    //     throw new Error(`HTTP error! status: ${response.status}`);
+    //   }
   
-      // Read the response as plain text
-      const responseData = await response.text();
-      console.log(responseData); // Log the plain text response
-    } catch (error) {
-      console.error('Failed to send terms:', error);
-    }
+    //   // Read the response as plain text
+    //   const responseData = await response.text();
+    //   console.log(responseData); // Log the plain text response
+    // } catch (error) {
+    //   console.error('Failed to send terms:', error);
+    // }
   };
-  
-  
-
-  // const updateTerms = async (termsPassed) => {
-  //   try {
-  //     // Send the terms to the backend
-  //     const response = await fetch('http://localhost:5191/api/terms', {
-  //       method: 'POST', // Use 'POST' or 'PUT' as appropriate
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify(termsPassed), // Send the original terms to the backend
-  //     });
-  
-  //     if (!response.ok) {
-  //       throw new Error(`HTTP error! status: ${response.status}`);
-  //     }
-  
-  //     // Get the updated terms from the backend
-  //     const updatedTerms = await response.json();
-  
-  //     // Update the state with the updated terms
-  //     setTerms(updatedTerms);
-  
-  //     console.log('Successfully updated terms from backend:', updatedTerms);
-  //   } catch (error) {
-  //     console.error('Failed to update terms:', error);
-  //   }
-  // };
   
 
   const { onDragStart, onDragOver, onDragEnd, activeCourse } = useDragAndDrop({
@@ -102,6 +74,7 @@ const HomePage = () => {
     setFilteredResults,
     setDisplayRemoveCourse,
     updateTerms,
+    sendCourseUpdateToBackend
   });
 
   return (
@@ -115,7 +88,7 @@ const HomePage = () => {
     >
       {/* Main Layout */}
       <div className="grid grid-cols-[1fr_300px] grid-rows-[100px_calc(100%-100px)] h-full font-arial">
-        <StartSettings isStartModalOpen={isStartModalOpen} setIsStartModalOpen={setIsStartModalOpen} setTerms={setTerms}/>
+        <StartSettings isStartModalOpen={isStartModalOpen} setIsStartModalOpen={setIsStartModalOpen} setTerms={setTerms} sendTermsToBackend={sendTermsToBackend}/>
         <div className="col-span-2 row-start-1 bg-zinc-800 flex items-center justify-center">
           {/* Header */}
           <h1 className="text-3xl font-bold">Course Planner</h1>
