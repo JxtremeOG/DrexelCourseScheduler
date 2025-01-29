@@ -29,10 +29,12 @@ export const useDragAndDrop = ({ terms, filteredResults, setFilteredResults, set
     const { active, over } = event;
     if (!over) return;
 
+    console.log("checkpoint 1")
+
     const activeIdStr = active.id.toString();
     const overIdStr = over.id.toString();
 
-    if (activeIdStr === overIdStr) return; // Dropped onto itself
+    // if (activeIdStr === overIdStr) return; // Dropped onto itself
 
     const activeType = active.data.current?.type;
     const overType = over.data.current?.type;
@@ -83,6 +85,8 @@ export const useDragAndDrop = ({ terms, filteredResults, setFilteredResults, set
       );
     }
 
+    console.log("checkpoint 2")
+
     // Determine the position to insert
     if (overType === 'course') {
       const destinationCourse = terms[destinationTermIndex].courses.find(
@@ -105,7 +109,10 @@ export const useDragAndDrop = ({ terms, filteredResults, setFilteredResults, set
     const { active, over } = event;
 
     setActiveId(null); // Reset the activeId
-    if (!over) return; // Dropped outside any droppable
+    if (!over) {
+      console.log('Dropped outside any droppable');
+      return; // Dropped outside any droppable
+    }
 
     const activeIdStr = active.id.toString();
     const overIdStr = over.id.toString();
@@ -113,31 +120,41 @@ export const useDragAndDrop = ({ terms, filteredResults, setFilteredResults, set
     const overType = over.data.current?.type;
 
     setDisplayRemoveCourse(false);
-    if (activeIdStr === overIdStr) return; // Dropped onto itself
-    if (activeType === 'courseSearched' && (overType == 'searchResults' || overType == 'courseSearched')) return;
 
     // Find the source term and the course being dragged
-    let sourceTermIndex = -1;
     let course = null;
     let foundCourse;
 
     terms.forEach((term, index) => {
       foundCourse = term.courses.find((c) => c.id === activeIdStr);
       if (foundCourse) {
-        sourceTermIndex = index;
         course = foundCourse;
       }
     });
 
     if (overType == 'searchResults' || overType == 'courseSearched') {
-      if (sourceTermIndex !== -1) {
+      console.log("Course is being deleted", course);
+      if (activeType === 'courseSearched') {
         // Remove the course from the source term
         const updatedTerms = [...terms];
-        updatedTerms[sourceTermIndex].courses = updatedTerms[sourceTermIndex].courses.filter(
-          (c) => c.id !== activeIdStr
-        );
-        sendCourseUpdateToBackend("Course is deleted", course, -1, sourceTermIndex);
-        updateTerms(updatedTerms);
+        updatedTerms.forEach((term, index) => {
+          updatedTerms[index].courses = term.courses.filter((c) => c.id !== activeIdStr);
+        });
+        
+        sendCourseUpdateToBackend(
+          "Course is deleted",
+          course,
+          -1
+        )
+          .then((coursesPassed) => {
+            // coursesPassed is the resolved value
+            updateTerms(updatedTerms, coursesPassed.passedCourses);
+          })
+          .catch((error) => {
+            // Handle errors
+            console.error('Error updating courses:', error);
+            // Optionally, set an error state or show a message to the user
+          });
       } else {
         // Remove the course from filteredResults if it's already in SearchResults
         setFilteredResults((prevFiltered) =>
@@ -150,37 +167,77 @@ export const useDragAndDrop = ({ terms, filteredResults, setFilteredResults, set
     if (!course) {
       foundCourse = filteredResults.find((c) => c.id === activeIdStr);
       if (foundCourse) {
-        sourceTermIndex = -1;
         course = foundCourse;
       }
-      if (!course) return;
+      if (!course) {
+        console.error('Course not found:', activeIdStr);
+        return;
+      }
     }
 
     const destinationTermIndex = terms.findIndex((term) =>
       term.courses.some((c) => c.id === overIdStr)
     );
 
+    if (activeIdStr === overIdStr) {
+      const updatedTerms = [...terms];
+      console.log('Dropped onto itself');
+      sendCourseUpdateToBackend(
+        "Dropped onto itself",
+        course,
+        destinationTermIndex
+      )
+        .then((coursesPassed) => {
+          // coursesPassed is the resolved value
+          updateTerms(updatedTerms, coursesPassed.passedCourses);
+        })
+        .catch((error) => {
+          // Handle errors
+          console.error('Error updating courses:', error);
+          // Optionally, set an error state or show a message to the user
+        });
+      return; // Dropped onto itself
+    }
+    if (activeType === 'courseSearched' && (overType == 'searchResults' || overType == 'courseSearched')) {
+      console.log('Dropped onto searchResults and is a courseSearched');
+      return;
+    }
+
     // If dropping onto a term container (empty space)
     if (destinationTermIndex === -1) {
       const destinationTermIndexFallback = terms.findIndex(
-        (term) => term.id === overIdStr
+        (term) => term.id === overIdStr,
       );
       if (destinationTermIndexFallback !== -1) {
         // Move the course to the end of the destination term
         const updatedTerms = [...terms];
         // Remove from source
-        if (sourceTermIndex !== -1) {
-          updatedTerms[sourceTermIndex].courses = updatedTerms[sourceTermIndex].courses.filter(
-            (c) => c.id !== activeIdStr
-          );
+        if (activeType !== 'courseSearched') {
+          console.log("Course is being moved (on term)", course, destinationTermIndexFallback);
+          updatedTerms.forEach((term, index) => {
+            updatedTerms[index].courses = term.courses.filter((c) => c.id !== activeIdStr);
+          });
+          
         } else {
           // If the course was in SearchResults, remove it from there
           setFilteredResults((prev) => prev.filter((c) => c.id !== activeIdStr));
         }
         // Add to destination
         updatedTerms[destinationTermIndexFallback].courses.push(course);
-        sendCourseUpdateToBackend("Course is being moved (on course)", course, destinationTermIndexFallback, sourceTermIndex);
-        updateTerms(updatedTerms);
+        sendCourseUpdateToBackend(
+          "Course is being moved (on term)",
+          course,
+          destinationTermIndexFallback
+        )
+          .then((coursesPassed) => {
+            // coursesPassed is the resolved value
+            updateTerms(updatedTerms, coursesPassed.passedCourses);
+          })
+          .catch((error) => {
+            // Handle errors
+            console.error('Error updating courses:', error);
+            // Optionally, set an error state or show a message to the user
+          });
       }
     }
     else {
@@ -188,41 +245,56 @@ export const useDragAndDrop = ({ terms, filteredResults, setFilteredResults, set
       const destinationCourse = terms[destinationTermIndex].courses.find(
         (c) => c.id === overIdStr
       );
-      if (!destinationCourse) return;
+      if (!destinationCourse) {
+        console.error('Destination course not found:', overIdStr);
+        return;
+      }
 
       // If moving within the same term, reorder
-      if (sourceTermIndex === destinationTermIndex) {
-        const term = terms[sourceTermIndex];
-        const oldIndex = term.courses.findIndex((c) => c.id === activeIdStr);
-        const newIndex = term.courses.findIndex((c) => c.id === overIdStr);
+      const term = terms[destinationTermIndex];
+      const oldIndex = term.courses.findIndex((c) => c.id === activeIdStr);
+      const newIndex = term.courses.findIndex((c) => c.id === overIdStr);
 
-        if (oldIndex !== newIndex) {
-          const newCourses = arrayMove(term.courses, oldIndex, newIndex);
-          const updatedTerms = [...terms];
-          updatedTerms[sourceTermIndex] = { ...term, courses: newCourses };
-          updateTerms(updatedTerms);
-        }
-      } else {
-        // Moving to a different term
+      if (oldIndex !== newIndex) {
+        const newCourses = arrayMove(term.courses, oldIndex, newIndex);
         const updatedTerms = [...terms];
-        // Remove from source
-        if (sourceTermIndex !== -1) {
-          updatedTerms[sourceTermIndex].courses = updatedTerms[sourceTermIndex].courses.filter(
-            (c) => c.id !== activeIdStr
-          );
-        } else {
-          // If the course was in SearchResults, remove it from there
-          setFilteredResults((prev) => prev.filter((c) => c.id !== activeIdStr));
-        }
-        // Insert into destination at the position of the over course
-        const destinationCourses = [...updatedTerms[destinationTermIndex].courses];
-        const overIndex = destinationCourses.findIndex((c) => c.id === overIdStr);
-        destinationCourses.splice(overIndex, 0, course);
-        updatedTerms[destinationTermIndex].courses = destinationCourses;
-        sendCourseUpdateToBackend("Course is being moved (on term)", course, destinationTermIndex, sourceTermIndex);
+        updatedTerms[destinationTermIndex] = { ...term, courses: newCourses };
         updateTerms(updatedTerms);
       }
+      // Moving to a different term
+      const updatedTerms = [...terms];
+      // Remove from source
+      if (activeType !== 'courseSearched') {
+        updatedTerms.forEach((term, index) => {
+          updatedTerms[index].courses = term.courses.filter((c) => c.id !== activeIdStr);
+        });
+        
+      } else {
+        // If the course was in SearchResults, remove it from there
+        setFilteredResults((prev) => prev.filter((c) => c.id !== activeIdStr));
+      }
+      // Insert into destination at the position of the over course
+      const destinationCourses = [...updatedTerms[destinationTermIndex].courses];
+      const overIndex = destinationCourses.findIndex((c) => c.id === overIdStr);
+      destinationCourses.splice(overIndex, 0, course);
+      updatedTerms[destinationTermIndex].courses = destinationCourses;
+      console.log("Course is being moved (on course)", course, destinationTermIndex);
+      sendCourseUpdateToBackend(
+        "Course is being moved (on course)",
+        course,
+        destinationTermIndex
+      )
+        .then((coursesPassed) => {
+          // coursesPassed is the resolved value
+          updateTerms(updatedTerms, coursesPassed.passedCourses);
+        })
+        .catch((error) => {
+          // Handle errors
+          console.error('Error updating courses:', error);
+          // Optionally, set an error state or show a message to the user
+        });
     }
+    console.log("checkpoint 3")
     return
   };
 
