@@ -86,8 +86,15 @@ public class PrereqTree {
                 courseNode = new PrereqCourseNode(course, 0);
             }
             else {
-                CourseModel course = _schedule.CreateCourseFromShortName(prereqList[0]);
-                courseNode = new PrereqCourseNode(course, _schedule.GetCourseTermIndex(course));
+                // CourseModel course = _schedule.CreateCourseFromShortName(prereqList[0]);
+                // courseNode = new PrereqCourseNode(course, _schedule.GetCourseTermIndex(course));
+                int termIndex = _schedule.GetMaximumCourseTermIndex(prereqList[0]);
+                CourseModel course;
+                if (termIndex != -1)
+                    course = _schedule.GetCourseFromTerm(prereqList[0], termIndex);
+                else
+                    course = _schedule.CreateCourseFromShortName(prereqList[0]);
+                courseNode = new PrereqCourseNode(course, termIndex);
             }
 
             if (courseNode == null) {

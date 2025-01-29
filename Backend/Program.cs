@@ -1,12 +1,10 @@
-using Serilog;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Log4Net.AspNetCore;
 //dotnet run
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Host.UseSerilog((context, configuration) =>
-{
-    configuration.WriteTo.Console()
-                 .WriteTo.File("logs/log.txt", rollingInterval: RollingInterval.Day);
-});
+builder.Logging.ClearProviders(); // Remove default logging providers
+builder.Logging.AddLog4Net("log4net.config"); // Add log4net using the configuration file
 
 // Add services to the container
 builder.Services.AddControllers()
@@ -51,3 +49,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+logger.LogInformation("Application has started.");
+logger.LogError("This is a test error log.");

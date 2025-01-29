@@ -33,14 +33,15 @@ export const sendTermsToBackend = async (message, terms) => {
   }
 };
 
-export const sendCourseUpdateToBackend = async (message, course, termIndex, prevTermIndex) => {
+export const sendCourseUpdateToBackend = async (message, course, termIndex) => {
   try {
     const courseRequest = {
       Message: message,
       Course: course,
-      TermIndex: termIndex, 
-      PrevTermIndex: prevTermIndex
+      TermIndex: termIndex
     };
+
+    ////IF YOU DROP A COURSE ONTO ANOTHER COURSE NOTHING GETS SENT TO THE BACKEND
 
     console.log('Sending course:', courseRequest);
 
@@ -51,6 +52,7 @@ export const sendCourseUpdateToBackend = async (message, course, termIndex, prev
     });
 
     console.log('Success:', response.data);
+
     return response.data; // Return data for further handling if needed
   } catch (error) {
     console.error('Error sending course update:', error);

@@ -18,6 +18,6 @@ public class TermModel{
         Courses.Add(course);
     }
     public void RemoveCourse(CourseModel course){
-        Courses = Courses.Where(course => course.Id != course.Id).ToList();
+        Courses = Courses.Where(c => c.Id != course.Id).ToList();
     }
 }

@@ -73,7 +73,6 @@ public class SchedulerController : ControllerBase
         string Message = root.GetProperty("Message").ToString();
         JsonElement courseIdElement = root.GetProperty("Course");
         int termIndex = Convert.ToInt32(root.GetProperty("TermIndex").ToString());
-        int prevTermIndex = Convert.ToInt32(root.GetProperty("PrevTermIndex").ToString());
 
         _logger.LogInformation("POST request received with message: {Message}", Message);
 
@@ -91,24 +90,38 @@ public class SchedulerController : ControllerBase
             courseIdElement.GetProperty("completedCoReqs").GetBoolean(),
             courseIdElement.GetProperty("id").GetString());
 
-        _logger.LogInformation($"SendCourseUpdate: CourseId: {courseIdElement.GetProperty("id").GetString()} {Course.Id}");
-        _logger.LogInformation($"SendCourseUpdate: PrevTermIndex: {prevTermIndex}, TermIndex: {termIndex}");
-
-        if (prevTermIndex != -1) // Course is being created
-            _scheduleModel.RemoveCourseFromTerm(Course, prevTermIndex);
-        if (termIndex != -1) //Course is being deleted
+        _logger.LogInformation($"Course {Course.Id} received with term index {termIndex}");
+        int previousTermIndex = _scheduleModel.GetCourseTermIndex(Course, true);
+        if (previousTermIndex != -1) { // Course is being created
+            _logger.LogInformation($"Removing course {Course.ShortName} from term {previousTermIndex}");
+            _scheduleModel.RemoveCourseFromTerm(Course, previousTermIndex);
+        }
+        if (termIndex != -1) {//Course is being deleted
+            _logger.LogInformation($"Adding course {Course.ShortName} to term {termIndex}");
             _scheduleModel.AddCourseToTerm(Course, termIndex);
+        }
 
         List<CourseModel> coursesNeedUpdating = new List<CourseModel>();
+        Dictionary<string, bool> previousCoursePreReqsStatus = new Dictionary<string, bool>();
+        foreach (TermModel termModel in _scheduleModel.Terms)
+        {
+            foreach (CourseModel course in termModel.Courses)
+            {
+                _logger.LogInformation($"Checking course {course.ShortName} in term {_scheduleModel.GetCourseTermIndex(course)}");
+            }
+        }
         foreach (CourseModel course in _scheduleModel.Terms.SelectMany(term => term.Courses))
         {
             _logger.LogInformation($"Checking course {course.ShortName} in term {_scheduleModel.GetCourseTermIndex(course)}");
+
+            previousCoursePreReqsStatus.Add(course.Id, course.CompletedPreReqs);
+
             PrereqTree tree = new PrereqTree(course, _scheduleModel, _loggerPrereqTree, _requisitesHandler);
             tree.BuildTree();
-            bool result = tree.IsPrereqSatisfied(tree.getRoot());
-            if (!result) {
+            course.CompletedPreReqs = tree.IsPrereqSatisfied(tree.getRoot());
+            if (course.CompletedPreReqs != previousCoursePreReqsStatus.GetValueOrDefault(course.Id, !course.CompletedPreReqs))
+            {
                 coursesNeedUpdating.Add(course);
-                _logger.LogInformation($"Course {course.ShortName} needs updating. {!result}");
             }
         }
 
@@ -117,10 +130,20 @@ public class SchedulerController : ControllerBase
             _logger.LogInformation($"Course needs updating {coursesNeedUpdating.Count}");
         }
 
+        if (coursesNeedUpdating is null) {
+            _logger.LogInformation("Schedule update failed.");
+            return Ok(new
+            {
+                response = "Schedule update failed.",
+                passedCourses = coursesNeedUpdating
+            });
+        }
+
+        _logger.LogInformation("Schedule updated successfully.");
         return Ok(new
         {
-            response = "Course update successful.",
-            updatedSchedule = ""
+            response = "Schedule updated successfully.",
+            passedCourses = coursesNeedUpdating
         });
     }
 

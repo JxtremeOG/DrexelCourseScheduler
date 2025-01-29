@@ -33,7 +33,7 @@ const Term = ({ term }) => {
           strategy={horizontalListSortingStrategy}
         >
           {courses.map((course, index) => (
-            <CoursePlaced key={course.id} course={course} index={index} />
+            <CoursePlaced key={course.id} course={course} index={index} termId={id} />
           ))}
         </SortableContext>
       </div>

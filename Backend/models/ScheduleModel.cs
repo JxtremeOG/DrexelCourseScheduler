@@ -16,7 +16,7 @@ public class ScheduleModel {
     public void RemoveCourseFromTerm(CourseModel course, int termIndex) {
         Terms[termIndex].RemoveCourse(course);
     }
-    public int GetCourseTermIndex(CourseModel course) {
+    public int GetCourseTermIndex(CourseModel course, bool canNotFind = false) {
         string courseId = course.Id;
         for (int i = 0; i < Terms.Count; i++) {
             for (int j = 0; j < Terms[i].Courses.Count; j++) {
@@ -25,8 +25,31 @@ public class ScheduleModel {
                 }
             }
         }
-        _logger.LogError($"Course with shortName {course.ShortName} id {courseId} not found in any term.");
+        if (!canNotFind)
+            _logger.LogError($"Course with shortName {course.ShortName} id {courseId} not found in any term.");
         return -1;
+    }
+
+    public int GetMaximumCourseTermIndex(string courseShortName) {
+        for (int i = Terms.Count - 1; i >= 0; i--) {
+            for (int j = 0; j < Terms[i].Courses.Count; j++) {
+                if (Terms[i].Courses[j].ShortName == courseShortName) {
+                    return i; //Finds the max because we are looking from last term to first term
+                }
+            }
+        }
+        _logger.LogError($"GetMaximumCourseTermIndex: Course with shortName {courseShortName} not found in any term.");
+        return -1;
+    }
+
+    public CourseModel GetCourseFromTerm(string courseShortName, int termIndex) {
+        foreach (CourseModel course in Terms[termIndex].Courses) {
+            if (course.ShortName == courseShortName) {
+                return course; //If there are two it takes the first one this shouldn't effect any logic
+            }
+        }
+        _logger.LogError($"GetCourseFromTerm: Course with shortName {courseShortName} not found in any term.");
+        return null;
     }
 
     public CourseModel CreateCourseFromShortName(string shortName) {

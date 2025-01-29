@@ -34,7 +34,38 @@ const HomePage = () => {
   const [isStartModalOpen, setIsStartModalOpen] = useState(true);
   const [displayRemoveCourse, setDisplayRemoveCourse] = useState(false);
 
-  const updateTerms = async (termsPassed) => {  
+  const updateTerms = async (termsPassed, coursesPassed = "Nothing") => {  
+    if (Array.isArray(coursesPassed)) {
+      for (let i = 0; i < coursesPassed.length; i++) {
+        for (let j = 0; j < termsPassed.length; j++) {
+          for (let k = 0; k < termsPassed[j].courses.length; k++) {
+            if (coursesPassed[i].id === termsPassed[j].courses[k].id) {
+              // console.log(`ORIG ${JSON.stringify(termsPassed[j].courses[k], null, 2)}`);
+              // console.log(`PASS ${JSON.stringify(coursesPassed[i], null, 2)}`);
+              termsPassed[j].courses[k].id = coursesPassed[i].id;
+              termsPassed[j].courses[k].shortName = coursesPassed[i].shortName;
+              termsPassed[j].courses[k].fullName = coursesPassed[i].fullName;
+              termsPassed[j].courses[k].courseCredits = coursesPassed[i].credits;
+              termsPassed[j].courses[k].courseDepartment = coursesPassed[i].department;
+              termsPassed[j].courses[k].courseDesc = coursesPassed[i].description;
+              termsPassed[j].courses[k].offered = coursesPassed[i].offeredTerms;
+              termsPassed[j].courses[k].prereqs = coursesPassed[i].prerequisites;
+              termsPassed[j].courses[k].coreqs = coursesPassed[i].corequisites;
+              termsPassed[j].courses[k].repeatStatus = coursesPassed[i].repeatStatus;
+              termsPassed[j].courses[k].restrictions = coursesPassed[i].restrictions;
+              termsPassed[j].courses[k].completedPreReqs = coursesPassed[i].completedPreReqs;
+              termsPassed[j].courses[k].completedCoReqs = coursesPassed[i].completedCoreqs;
+            }
+          }
+        }
+      }
+    } else {
+      if (coursesPassed !== "Nothing")
+        console.error('passedCourses is not an array:', coursesPassed);
+    }
+
+
+    // Update the terms with the new course list
     const updatedTerms = termsPassed.map(term => {
       const totalCredits = term.courses.reduce((sum, course) => {
         const credits = parseFloat(course.courseCredits) || 0;
