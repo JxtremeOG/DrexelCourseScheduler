@@ -56,14 +56,14 @@ public class ScheduleModel {
         if (_courseInformation.ContainsKey(shortName)) {
             CourseModel course = _courseInformation[shortName];
             course.Id = GenerateCourseId();
-            _logger.LogInformation($"Creating course with {course.Id} is null {course.Id is null}");
+            _logger.LogInformation($"Creating course with {course.Id} for {shortName}");
             return course;
         }
         _logger.LogError($"Course with short name {shortName} not found in course information.");
-        return null;
+        return CreateCourseFromShortName("FAKE 001");
     }
 
     private string GenerateCourseId() {
-        return $"course-{DateTime.Now.Ticks}-{Guid.NewGuid().ToString("N").Substring(0, 5)}";
+        return $"courseTEMP-{DateTime.UtcNow.Ticks}-{Guid.NewGuid().ToString("N").Substring(0, 10)}";
     }
 }

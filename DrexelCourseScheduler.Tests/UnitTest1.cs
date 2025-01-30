@@ -53,8 +53,9 @@ public class UnitTest1
     [InlineData("CS 260:4,CS 265:3,CS 172:3,CS 171:1","false")]
     [InlineData("CS 277:6,CS 260:4,CS 270:3,MATH 221:4,CS 265:3,CS 172:2,CS 171:1","true")]
     [InlineData("CS 277:6,CS 260:4,CS 270:3,MATH 221:3,CS 265:3,CS 172:3,CS 171:1","false")]
-    [InlineData("CS 383:8,CS 260:4,CS 270:3,MATH 221:4,CS 265:3,CS 172:2,CS 171:1,ENGR 231:4,MATH 122:3,MATH 121:2,MATH 311:5","true")]
+    [InlineData("CS 383:8,CS 260:4,CS 270:3,MATH 221:4,CS 265:3,CS 172:2,CS 171:1,ENGR 231:4,MATH 122:3,MATH 121:0,MATH 311:5","true")]
     [InlineData("CS 383:8,CS 260:4,CS 270:3,MATH 221:4,CS 265:4,CS 172:2,CS 171:1,ENGR 231:4,MATH 122:3,MATH 121:2,MATH 311:5","false")]
+    [InlineData("CS 455:6","false")] //HAS NON EXISTENT COURSE PRERECS
     //CS 260 and (MATH 201 or ENGR 231) and (MATH 221 or MATH 222) and (MATH 311 or MATH 410 or ECE 361)
 
     public void TestPrereqTree(string input, string expected) {

@@ -82,8 +82,8 @@ public class PrereqTree {
             PrereqCourseNode courseNode = null;
             if (prereqList[0].Contains("AP")) {
                 CourseModel course = _schedule.CreateCourseFromShortName("FAKE 000");
-                _schedule.AddCourseToTerm(course, 0);
-                courseNode = new PrereqCourseNode(course, 0);
+                // _schedule.AddCourseToTerm(course, 0);
+                courseNode = new PrereqCourseNode(course, -1);
             }
             else {
                 // CourseModel course = _schedule.CreateCourseFromShortName(prereqList[0]);
@@ -131,7 +131,15 @@ public class PrereqTree {
             }
             if (node.Children.Count == 0 || node.Children[0] == null) 
                 return true;
+            if (node.TermIndex == 0) {
+                _logger.LogInformation($"Course was taken before the start of the schedule");
+                return true;
+            }
             int childTermIndex = node.Children[0].GetTermIndex();
+            if (childTermIndex == 0) {
+                _logger.LogInformation($"Course was taken before the start of the schedule");
+                return true;
+            }
             if (childTermIndex != -1 && node.TermIndex > childTermIndex)
                 return IsPrereqSatisfied(node.Children[0]);
             _logger.LogError("Prerequisite not satisfied");

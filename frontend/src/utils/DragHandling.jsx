@@ -132,14 +132,19 @@ export const useDragAndDrop = ({ terms, filteredResults, setFilteredResults, set
       }
     });
 
-    if (overType == 'searchResults' || overType == 'courseSearched') {
+    if (overType === 'searchResults' || overType === 'courseSearched' && activeType === 'course') {
       console.log("Course is being deleted", course);
-      if (activeType === 'courseSearched') {
+      console.log(activeType)
+      if (activeType === 'course') {
         // Remove the course from the source term
         const updatedTerms = [...terms];
-        updatedTerms.forEach((term, index) => {
+        updatedTerms.forEach((term, index) => { 
           updatedTerms[index].courses = term.courses.filter((c) => c.id !== activeIdStr);
         });
+
+        setFilteredResults((prevFiltered) =>
+          prevFiltered.filter((c) => c.id !== activeIdStr)
+        );
         
         sendCourseUpdateToBackend(
           "Course is deleted",
@@ -155,11 +160,6 @@ export const useDragAndDrop = ({ terms, filteredResults, setFilteredResults, set
             console.error('Error updating courses:', error);
             // Optionally, set an error state or show a message to the user
           });
-      } else {
-        // Remove the course from filteredResults if it's already in SearchResults
-        setFilteredResults((prevFiltered) =>
-          prevFiltered.filter((c) => c.id !== activeIdStr)
-        );
       }
       return;
     }

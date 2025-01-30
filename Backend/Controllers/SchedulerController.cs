@@ -74,7 +74,7 @@ public class SchedulerController : ControllerBase
         JsonElement courseIdElement = root.GetProperty("Course");
         int termIndex = Convert.ToInt32(root.GetProperty("TermIndex").ToString());
 
-        _logger.LogInformation("POST request received with message: {Message}", Message);
+        _logger.LogInformation("POST request received with message: {Message} for SendCourseUpdate", Message);
 
         CourseModel Course = new CourseModel(courseIdElement.GetProperty("shortName").GetString(), 
             courseIdElement.GetProperty("fullName").GetString(), 
@@ -103,13 +103,6 @@ public class SchedulerController : ControllerBase
 
         List<CourseModel> coursesNeedUpdating = new List<CourseModel>();
         Dictionary<string, bool> previousCoursePreReqsStatus = new Dictionary<string, bool>();
-        foreach (TermModel termModel in _scheduleModel.Terms)
-        {
-            foreach (CourseModel course in termModel.Courses)
-            {
-                _logger.LogInformation($"Checking course {course.ShortName} in term {_scheduleModel.GetCourseTermIndex(course)}");
-            }
-        }
         foreach (CourseModel course in _scheduleModel.Terms.SelectMany(term => term.Courses))
         {
             _logger.LogInformation($"Checking course {course.ShortName} in term {_scheduleModel.GetCourseTermIndex(course)}");
