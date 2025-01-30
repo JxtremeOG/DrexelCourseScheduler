@@ -1,3 +1,5 @@
+using System.Reflection;
+
 public class ScheduleModel {
     public List<TermModel> Terms;
     private ILogger<ScheduleModel> _logger;
@@ -30,16 +32,16 @@ public class ScheduleModel {
         return -1;
     }
 
-    public int GetMaximumCourseTermIndex(string courseShortName) {
-        for (int i = Terms.Count - 1; i >= 0; i--) {
+    public Tuple<int, string> GetMaximumValidCourseTermIndex(string courseShortName, int pivotTermIndex) {
+        for (int i = pivotTermIndex-1; i >= 0; i--) {
             for (int j = 0; j < Terms[i].Courses.Count; j++) {
                 if (Terms[i].Courses[j].ShortName == courseShortName) {
-                    return i; //Finds the max because we are looking from last term to first term
+                    return new Tuple<int, string>(i, Terms[i].Courses[j].Id); //Finds the max because we are looking from last term to first term (and starts at the pivot term)
                 }
             }
         }
-        _logger.LogError($"GetMaximumCourseTermIndex: Course with shortName {courseShortName} not found in any term.");
-        return -1;
+        _logger.LogInformation($"GetMaximumCourseTermIndex: Course with shortName {courseShortName} not found in any term.");
+        return new Tuple<int, string>(-1, "");
     }
 
     public CourseModel GetCourseFromTerm(string courseShortName, int termIndex) {

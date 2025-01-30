@@ -74,10 +74,10 @@ public class PrereqTree {
     }
 
     public void BuildTree() {
-        _root.AddChild(ExtendTree(_requisitesHandler.SplitRequisites(_requisitesHandler.CleanRequisites(_root.Course.Prerequisites))));
+        _root.AddChild(ExtendTree(_requisitesHandler.SplitRequisites(_requisitesHandler.CleanRequisites(_root.Course.Prerequisites)), _root.TermIndex));
     }
 
-    private PrereqNode ExtendTree(List<string> prereqList) {
+    private PrereqNode ExtendTree(List<string> prereqList, int extendeeTermIndex) {
         if (prereqList.Count == 1 && prereqList[0].Length > 0) {
             PrereqCourseNode courseNode = null;
             if (prereqList[0].Contains("AP")) {
@@ -88,7 +88,9 @@ public class PrereqTree {
             else {
                 // CourseModel course = _schedule.CreateCourseFromShortName(prereqList[0]);
                 // courseNode = new PrereqCourseNode(course, _schedule.GetCourseTermIndex(course));
-                int termIndex = _schedule.GetMaximumCourseTermIndex(prereqList[0]);
+                Tuple<int, string> courseValues = _schedule.GetMaximumValidCourseTermIndex(prereqList[0], extendeeTermIndex);
+                int termIndex = courseValues.Item1;
+                string termId = courseValues.Item2; //Could be used for faster tree lookups would be complex to implement
                 CourseModel course;
                 if (termIndex != -1)
                     course = _schedule.GetCourseFromTerm(prereqList[0], termIndex);
@@ -104,7 +106,7 @@ public class PrereqTree {
 
             string cleanedPrereq = _requisitesHandler.CleanRequisites(courseNode.Course.Prerequisites);
             if (!cleanedPrereq.Equals("")) {
-                courseNode.AddChild(ExtendTree(_requisitesHandler.SplitRequisites(cleanedPrereq)));
+                courseNode.AddChild(ExtendTree(_requisitesHandler.SplitRequisites(cleanedPrereq), courseNode.TermIndex));
             }
             return courseNode;
         } else if (prereqList[0].Length == 0) {
@@ -113,8 +115,8 @@ public class PrereqTree {
         }
         else {
             PrereqOperatorNode operatorNode = new PrereqOperatorNode(prereqList[1]);
-            PrereqNode leftChild = ExtendTree(_requisitesHandler.SplitRequisites(prereqList[0]));
-            PrereqNode rightChild = ExtendTree(_requisitesHandler.SplitRequisites(prereqList[2]));
+            PrereqNode leftChild = ExtendTree(_requisitesHandler.SplitRequisites(prereqList[0]), extendeeTermIndex);
+            PrereqNode rightChild = ExtendTree(_requisitesHandler.SplitRequisites(prereqList[2]), extendeeTermIndex);
 
             operatorNode.AddChild(leftChild);
             operatorNode.AddChild(rightChild);
