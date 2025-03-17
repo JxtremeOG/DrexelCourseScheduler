@@ -9,7 +9,7 @@ import { GrAlert } from "react-icons/gr";
 import { PiSealWarningFill } from "react-icons/pi";
 
 const CoursePlaced = ({ course, termId }) => {
-  const { shortName, fullName, courseCredits, completedPreReqs, completedCoReqs } = course;
+  const { shortName, fullName, courseCredits, completedPreReqs, completedCoReqs, inOfferedTerm } = course;
   // Make this sortable represent a "course"
   const {
     attributes,
@@ -44,7 +44,10 @@ const CoursePlaced = ({ course, termId }) => {
       <p className='text-sm text-ellipsis overflow-hidden'>{fullName}</p>
       <div className='flex flex-row mt-auto'>
         <p className='mt-auto text-sm'>{courseCredits} Credits</p>
-        {completedPreReqs ? <GrValidate className='text-green-500 ml-auto size-6'/> : <PiSealWarningFill className='text-red-500 ml-auto size-7'/>}
+        {completedPreReqs ? completedCoReqs && inOfferedTerm ? 
+        <GrValidate className='text-green-500 ml-auto size-6'/> : 
+        <GrAlert className='text-yellow-500 ml-auto size-6'/> : 
+        <PiSealWarningFill className='text-red-500 ml-auto size-6'/>}
       </div>
     </div>
   );

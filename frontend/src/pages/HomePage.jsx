@@ -21,6 +21,7 @@ import { FaTrashRestore } from "react-icons/fa";
 import { useDragAndDrop } from '../utils/DragHandling';
 import { sendTermsToBackend } from '../services/apiService';
 import { sendCourseUpdateToBackend } from '../services/apiService';
+import SaveScheduleButton from '../components/SaveScheduleButton';
 
 ReactModal.setAppElement("#root");
 
@@ -40,8 +41,6 @@ const HomePage = () => {
         for (let j = 0; j < termsPassed.length; j++) {
           for (let k = 0; k < termsPassed[j].courses.length; k++) {
             if (coursesPassed[i].id === termsPassed[j].courses[k].id) {
-              // console.log(`ORIG ${JSON.stringify(termsPassed[j].courses[k], null, 2)}`);
-              // console.log(`PASS ${JSON.stringify(coursesPassed[i], null, 2)}`);
               termsPassed[j].courses[k].id = coursesPassed[i].id;
               termsPassed[j].courses[k].shortName = coursesPassed[i].shortName;
               termsPassed[j].courses[k].fullName = coursesPassed[i].fullName;
@@ -55,6 +54,8 @@ const HomePage = () => {
               termsPassed[j].courses[k].restrictions = coursesPassed[i].restrictions;
               termsPassed[j].courses[k].completedPreReqs = coursesPassed[i].completedPreReqs;
               termsPassed[j].courses[k].completedCoReqs = coursesPassed[i].completedCoreqs;
+              termsPassed[j].courses[k].inOfferedTerm = coursesPassed[i].inOfferedTerm;
+              console.log(coursesPassed[i].InOfferedTerm);
             }
           }
         }
@@ -74,27 +75,6 @@ const HomePage = () => {
       return { ...term, termCredits: totalCredits };
     });
     setTerms(updatedTerms);
-  
-    // try {
-    //   // Send the terms to the backend as a plain string
-    //   const response = await fetch('http://localhost:5191/api/example', {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify("Test Message"), // Send a simple string
-    //   });
-  
-    //   if (!response.ok) {
-    //     throw new Error(`HTTP error! status: ${response.status}`);
-    //   }
-  
-    //   // Read the response as plain text
-    //   const responseData = await response.text();
-    //   console.log(responseData); // Log the plain text response
-    // } catch (error) {
-    //   console.error('Failed to send terms:', error);
-    // }
   };
   
 
@@ -118,12 +98,12 @@ const HomePage = () => {
       modifiers={[restrictToWindowEdges]}
     >
       {/* Main Layout */}
-      <div className="grid grid-cols-[1fr_300px] grid-rows-[100px_calc(100%-100px)] h-full font-arial">
-        <StartSettings isStartModalOpen={isStartModalOpen} setIsStartModalOpen={setIsStartModalOpen} setTerms={setTerms} sendTermsToBackend={sendTermsToBackend}/>
-        <div className="col-span-2 row-start-1 bg-zinc-800 flex items-center justify-center">
+      <div className="grid grid-cols-[1fr_300px] grid-rows-[50px_calc(100%-50px)] h-full font-arial">
+        <StartSettings isStartModalOpen={isStartModalOpen} setIsStartModalOpen={setIsStartModalOpen} setTerms={setTerms} sendTermsToBackend={sendTermsToBackend} terms={terms}/>
+        <div className="col-span-2 row-start-1 bg-zinc-800 flex items-center justify-start">
           {/* Header */}
-          <h1 className="text-3xl font-bold">Course Planner</h1>
-          
+          <SaveScheduleButton terms={terms} />
+          <h1 className="text-3xl font-bold mx-auto">Course Planner</h1>
         </div>
         <CourseDetailsContext.Provider value={{ setIsModalOpen, isModalOpen, courseDetailsDisplay, setCourseDetailsDisplay }}>
           <CourseInfo />

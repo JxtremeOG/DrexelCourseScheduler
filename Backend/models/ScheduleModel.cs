@@ -1,10 +1,11 @@
 using System.Reflection;
 
 public class ScheduleModel {
-    public List<TermModel> Terms;
+    public List<TermModel> Terms { get; set; }
     private ILogger<ScheduleModel> _logger;
     private FileReader _fileReader;
     private Dictionary<string, CourseModel> _courseInformation;
+    public List<string> TermNames { get; set; } = new List<string>();
     public ScheduleModel(ILogger<ScheduleModel> logger, FileReader fileReader) {
         Terms = new List<TermModel>();
         _logger = logger;
@@ -12,6 +13,16 @@ public class ScheduleModel {
         _courseInformation = _fileReader.ReadCoursesJson("courseJsons/masterJsons.json");
     }
 
+    public void SetTerms(List<TermModel> terms) {
+        Terms = terms;
+        for (int i = 0; i < Terms.Count; i++) {
+            TermNames.Add(Terms[i].Name);
+        }
+    }
+    public void AddTerm(TermModel term) {
+        Terms.Add(term);
+        TermNames.Add(term.Name);
+    }
     public void AddCourseToTerm(CourseModel course, int termIndex) {
         Terms[termIndex].AddCourse(course);
     }

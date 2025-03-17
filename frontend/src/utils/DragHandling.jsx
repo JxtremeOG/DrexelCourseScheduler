@@ -231,6 +231,7 @@ export const useDragAndDrop = ({ terms, filteredResults, setFilteredResults, set
         )
           .then((coursesPassed) => {
             // coursesPassed is the resolved value
+            console.log(coursesPassed.passedCourses)
             updateTerms(updatedTerms, coursesPassed.passedCourses);
           })
           .catch((error) => {

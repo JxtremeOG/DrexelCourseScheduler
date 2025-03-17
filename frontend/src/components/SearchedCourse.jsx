@@ -4,7 +4,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { CourseDetailsContext } from '../contexts/CourseDetailsContext';
 
 const SearchedCourse = ({ course }) => {
-    const { shortName, fullName, courseCredits } = course;
+    const { shortName, fullName, courseCredits, inOfferedTerm } = course;
 
     const {
         attributes,

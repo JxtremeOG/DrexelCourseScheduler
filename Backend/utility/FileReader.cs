@@ -39,7 +39,8 @@ public class FileReader {
                         restrictions: courseElement.GetProperty("restrictions").GetString(),
                         offeredTerms: courseElement.GetProperty("offered").GetString(),
                         completedPreReqs: false,
-                        completedCoreqs: false
+                        completedCoreqs: false,
+                        inOfferedTerm: false
                     );
 
                     coursesDict[courseKey] = course;

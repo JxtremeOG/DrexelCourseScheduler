@@ -58,11 +58,12 @@ public class UnitTest1
     [InlineData("CS 455:6","false")] //HAS NON EXISTENT COURSE PRERECS
     [InlineData("CS 172:5,CS 171:8,CS 171:3,CS 171:5,CS 171:9,CS 172:12,CS 171:15","true")]
     [InlineData("CS 265:4,CS 171:1,CS 172:2,CS 171:3","true")]
+    [InlineData("PHYS 101:3,PHYS 100:0,MATH 121:0","true")]
     //CS 260 and (MATH 201 or ENGR 231) and (MATH 221 or MATH 222) and (MATH 311 or MATH 410 or ECE 361)
 
     public void TestPrereqTree(string input, string expected) {
         for (int i = 0; i < 20; i++) {
-            _scheduleModel.Terms.Add(new TermModel($"term-{DateTime.Now.Ticks}-{Guid.NewGuid().ToString("N").Substring(0, 5)}", "Test", 0, new List<CourseModel>()));
+            _scheduleModel.AddTerm(new TermModel($"term-{DateTime.Now.Ticks}-{Guid.NewGuid().ToString("N").Substring(0, 5)}", "Test", 0, new List<CourseModel>()));
         }
         List<string> splitInput = input.Split(",").ToList();
         splitInput.ForEach(x => {
@@ -77,6 +78,51 @@ public class UnitTest1
     }
 
     [Theory]
+    [InlineData("CS 171:4", "true")]
+    [InlineData("MATH 109:4", "false")]
+    [InlineData("MATH 109:4,MATH 110:2", "false")]
+    [InlineData("MATH 110:4,MATH 109:4,EXAM 082:3", "false")]
+    [InlineData("MATH 109:4,MATH 110:4,EXAM 082:4", "true")]
+    public void TestCoreqCheck(string input, string expected) {
+        for (int i = 0; i < 20; i++) {
+            _scheduleModel.AddTerm(new TermModel($"term-{DateTime.Now.Ticks}-{Guid.NewGuid().ToString("N").Substring(0, 5)}", "Test", 0, new List<CourseModel>()));
+        }
+        List<string> splitInput = input.Split(",").ToList();
+        splitInput.ForEach(x => {
+            List<string> courseSplit = x.Split(":").ToList();
+            CourseModel course = _scheduleModel.CreateCourseFromShortName(courseSplit[0]);
+            _scheduleModel.AddCourseToTerm(course, Convert.ToInt32(courseSplit[1]));
+        });
+
+        CoreqHandler coreqHandler = new CoreqHandler(_scheduleModel.CreateCourseFromShortName(splitInput[0].Split(":")[0]), _requisitesHandler, _scheduleModel);
+        string result = coreqHandler.IsCoreqSatisfied().ToString().ToLower();
+        result.Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData("CS 171:2;Fall","true")]
+    [InlineData("CS 383:2;Fall","false")]
+    [InlineData("CS 383:2;Winter","true")]
+    public void TestIsOfferedTermSatisfied(string input, string expected) {
+        List<string> inputData = input.Split(";").ToList();
+        string coursesData = inputData[0];
+        string term = inputData[1];
+        for (int i = 0; i < 20; i++) {
+            _scheduleModel.AddTerm(new TermModel($"term-{DateTime.Now.Ticks}-{Guid.NewGuid().ToString("N").Substring(0, 5)}", term, 0, new List<CourseModel>()));
+        }
+        List<string> splitInput = coursesData.Split(",").ToList();
+        splitInput.ForEach(x => {
+            List<string> courseSplit = x.Split(":").ToList();
+            CourseModel course = _scheduleModel.CreateCourseFromShortName(courseSplit[0]);
+            _scheduleModel.AddCourseToTerm(course, Convert.ToInt32(courseSplit[1]));
+        });
+
+        OfferedTermHandler offeredTermHandler = new OfferedTermHandler(_scheduleModel.CreateCourseFromShortName(splitInput[0].Split(":")[0]), _requisitesHandler, _scheduleModel);
+        string result = offeredTermHandler.IsOfferedTermSatisfied().ToString().ToLower();
+        result.Should().Be(expected);
+    }
+
+    [Theory]
     [InlineData("CS 171", "CS 171")]
     public void TestCreateCrouseFromShortName(string input, string expected) {
         CourseModel result = _scheduleModel.CreateCourseFromShortName(input);
@@ -86,8 +132,20 @@ public class UnitTest1
     [Theory]
     [InlineData("CS 171", "CS 171")]
     [InlineData("(CS 260 and CS 265 and CS 270)", "CS 260 and CS 265 and CS 270")]
+    [InlineData("(APPH50 P or PHYS 100 or APC 070) and (MATH 121 or MATH 117)", "(APPH50 P or PHYS 100 or APC 070) and (MATH 121 or MATH 117)")]
     public void TestRemoveSurroundingParentheses(string input, string expected) {
         string result = _requisitesHandler.RemoveSurroundingParentheses(input);
         result.Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData("(APPH50 P or PHYS 100 or APC 070) and (MATH 121 or MATH 117)",
+    "APPH50 P or PHYS 100 or APC 070,and,MATH 121 or MATH 117")]
+    [InlineData("APPH50 P or PHYS 100 or APC 070",
+    "APPH50 P,or,PHYS 100 or APC 070")]
+    public void TestSplitRequisites(string input, string expected) {
+        List<string> result = _requisitesHandler.SplitRequisites(input);
+        string finalString = string.Join(",", result);
+        finalString.Should().BeEquivalentTo(expected);
     }
 }

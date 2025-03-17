@@ -1,3 +1,4 @@
+using System.Configuration;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
@@ -49,6 +50,99 @@ public class SchedulerController : ControllerBase
         _loggerPrereqTree = new Logger<PrereqTree>(_loggerFactory);
         _requisitesHandler = requisitesHandler;
     }
+
+    public CourseModel CreateCourseObject(JsonElement courseElement)
+    {
+        string id = courseElement.TryGetProperty("id", out JsonElement idElement) 
+            ? idElement.GetString() 
+            : string.Empty;
+
+        // Safely retrieve the "fullName" property
+        string shortName = courseElement.TryGetProperty("shortName", out JsonElement shortNameElement) 
+            ? shortNameElement.GetString() 
+            : string.Empty;
+
+        // Safely retrieve the "fullName" property
+        string fullName = courseElement.TryGetProperty("fullName", out JsonElement fullNameElement) 
+            ? fullNameElement.GetString() 
+            : string.Empty;
+
+        // Safely retrieve the "courseCredits" property
+        string courseCredits = courseElement.TryGetProperty("courseCredits", out JsonElement courseCreditsElement) 
+            ? courseCreditsElement.GetString() 
+            : string.Empty;
+
+        // Safely retrieve the "courseDesc" property
+        string courseDesc = courseElement.TryGetProperty("courseDesc", out JsonElement courseDescElement) 
+            ? courseDescElement.GetString() 
+            : string.Empty;
+
+        // Safely retrieve the "courseDepartment" property
+        string courseDepartment = courseElement.TryGetProperty("courseDepartment", out JsonElement courseDepartmentElement) 
+            ? courseDepartmentElement.GetString() 
+            : string.Empty;
+
+        // Safely retrieve the "repeatStatus" property
+        string repeatStatus = courseElement.TryGetProperty("repeatStatus", out JsonElement repeatStatusElement) 
+            ? repeatStatusElement.GetString() 
+            : string.Empty;
+
+        // Safely retrieve the "prereqs" property
+        string prereqs = courseElement.TryGetProperty("prereqs", out JsonElement prereqsElement) 
+            ? prereqsElement.GetString() 
+            : string.Empty;
+
+        // Safely retrieve the "coreqs" property
+        string coreqs = courseElement.TryGetProperty("coreqs", out JsonElement coreqsElement) 
+            ? coreqsElement.GetString() 
+            : string.Empty;
+
+        // Safely retrieve the "restrictions" property
+        string restrictions = courseElement.TryGetProperty("restrictions", out JsonElement restrictionsElement) 
+            ? restrictionsElement.GetString() 
+            : string.Empty;
+
+        // Safely retrieve the "offered" property
+        string offered = courseElement.TryGetProperty("offered", out JsonElement offeredElement) 
+            ? offeredElement.GetString() 
+            : string.Empty;
+
+        // Safely retrieve the "completedPreReqs" property (Boolean)
+        bool completedPreReqs = courseElement.TryGetProperty("completedPreReqs", out JsonElement completedPreReqsElement) 
+            ? completedPreReqsElement.GetBoolean() 
+            : false;
+
+        // Safely retrieve the "completedCoReqs" property (Boolean)
+        bool completedCoReqs = courseElement.TryGetProperty("completedCoReqs", out JsonElement completedCoReqsElement) 
+            ? completedCoReqsElement.GetBoolean() 
+            : false;
+
+        bool insideOfferedTerm = courseElement.TryGetProperty("inOfferedTerm", out JsonElement insideOfferedTermElement) 
+            ? insideOfferedTermElement.GetBoolean() 
+            : false;
+
+        // Now, you can create your Course object safely
+        var course = new CourseModel
+        (
+            shortName: shortName,
+            fullName: fullName,
+            credits: courseCredits,
+            description: courseDesc,
+            department: courseDepartment,
+            repeatStatus: repeatStatus,
+            prerequisites: prereqs,
+            corequisites: coreqs,
+            restrictions: restrictions,
+            offeredTerms: offered,
+            completedPreReqs: completedPreReqs,
+            completedCoreqs: completedCoReqs,
+            inOfferedTerm: insideOfferedTerm,
+            id: id
+        );
+        return course;
+
+    }
+
     // GET: api/scheduler
     [HttpGet]
     public IActionResult Get()
@@ -76,19 +170,7 @@ public class SchedulerController : ControllerBase
 
         _logger.LogInformation("POST request received with message: {Message} for SendCourseUpdate", Message);
 
-        CourseModel CourseUpdated = new CourseModel(courseIdElement.GetProperty("shortName").GetString(), 
-            courseIdElement.GetProperty("fullName").GetString(), 
-            courseIdElement.GetProperty("courseCredits").GetString(), 
-            courseIdElement.GetProperty("courseDesc").GetString(), 
-            courseIdElement.GetProperty("courseDepartment").GetString(), 
-            courseIdElement.GetProperty("repeatStatus").GetString(), 
-            courseIdElement.GetProperty("prereqs").GetString(), 
-            courseIdElement.GetProperty("coreqs").GetString(), 
-            courseIdElement.GetProperty("restrictions").GetString(), 
-            courseIdElement.GetProperty("offered").GetString(),
-            courseIdElement.GetProperty("completedPreReqs").GetBoolean(),
-            courseIdElement.GetProperty("completedCoReqs").GetBoolean(),
-            courseIdElement.GetProperty("id").GetString());
+        CourseModel CourseUpdated = CreateCourseObject(courseIdElement);
 
         _logger.LogInformation($"Course {CourseUpdated.Id} received with term index {placedTermIndex}");
         int previousTermIndex = _scheduleModel.GetCourseTermIndex(CourseUpdated, true);
@@ -101,16 +183,44 @@ public class SchedulerController : ControllerBase
             _scheduleModel.AddCourseToTerm(CourseUpdated, placedTermIndex);
         }
 
-        List<CourseModel> coursesNeedUpdating = new List<CourseModel>();
+        HashSet<CourseModel> coursesNeedUpdating = new HashSet<CourseModel>();
         Dictionary<string, bool> previousCoursePreReqsStatus = new Dictionary<string, bool>();
+        Dictionary<string, bool> previousCourseCoReqsStatus = new Dictionary<string, bool>();
+        Dictionary<string, bool> previousCourseOfferedStatus = new Dictionary<string, bool>();
         foreach (CourseModel course in _scheduleModel.Terms.SelectMany(term => term.Courses))
         {
-            _logger.LogInformation($"Checking course {course.ShortName} in term {_scheduleModel.GetCourseTermIndex(course)}");
+            int courseTermIndex = _scheduleModel.GetCourseTermIndex(course);
+            _logger.LogInformation($"Checking course {course.ShortName} in term {courseTermIndex}");
 
-            bool isAddedBefore = placedTermIndex <= _scheduleModel.GetCourseTermIndex(course);
-            bool isRemovedBefore = previousTermIndex < _scheduleModel.GetCourseTermIndex(course);
+            bool isAddedBefore = placedTermIndex <= courseTermIndex;
+            bool isRemovedBefore = previousTermIndex < courseTermIndex;
+            bool isSameTerm = previousTermIndex == courseTermIndex || placedTermIndex == courseTermIndex;
+            bool isSameCourse = course.Id == CourseUpdated.Id;
 
-            if ((isAddedBefore && !course.CompletedPreReqs) || (isRemovedBefore && course.CompletedPreReqs))
+            _logger.LogInformation($"isSameCourse: {isSameCourse}");
+            if (isSameCourse) {
+                previousCourseOfferedStatus.Add(course.Id, course.InOfferedTerm);
+                OfferedTermHandler offeredTermHandler = new OfferedTermHandler(course, _requisitesHandler, _scheduleModel);
+                _logger.LogInformation($"isOfferedTermSatisfied: {offeredTermHandler.IsOfferedTermSatisfied()}");
+                course.InOfferedTerm = offeredTermHandler.IsOfferedTermSatisfied();
+                if (offeredTermHandler.IsOfferedTermSatisfied() != previousCourseOfferedStatus.GetValueOrDefault(course.Id, !course.InOfferedTerm))
+                {
+                    _logger.LogInformation($"Course needs updating {course.ShortName}");
+                    coursesNeedUpdating.Add(course);
+                }
+            }
+
+            if (isSameCourse || isSameTerm) {
+                previousCourseCoReqsStatus.Add(course.Id, course.CompletedCoreqs);
+                CoreqHandler coreqHandler = new CoreqHandler(course, _requisitesHandler, _scheduleModel);
+                course.CompletedCoreqs = coreqHandler.IsCoreqSatisfied();
+                if (course.CompletedCoreqs != previousCourseCoReqsStatus.GetValueOrDefault(course.Id, !course.CompletedCoreqs))
+                {
+                    coursesNeedUpdating.Add(course);
+                }
+            }
+
+            if (isSameCourse || (isAddedBefore && !course.CompletedPreReqs) || (isRemovedBefore && course.CompletedPreReqs))
             {
                 previousCoursePreReqsStatus.Add(course.Id, course.CompletedPreReqs);
 
@@ -166,29 +276,17 @@ public class SchedulerController : ControllerBase
             double termCredits = Convert.ToDouble(termElement.GetProperty("termCredits").GetString());
             List<CourseModel> courses = new List<CourseModel>();
 
+            _logger.LogInformation($"Term {termName} received with id {termId} and credits {termCredits}");
             foreach (JsonElement courseElement in termElement.GetProperty("courses").EnumerateArray())
             {
-                CourseModel course = new CourseModel(courseElement.GetProperty("shortName").GetString(), 
-                    courseElement.GetProperty("fullName").GetString(), 
-                    courseElement.GetProperty("courseCredits").GetString(), 
-                    courseElement.GetProperty("courseDesc").GetString(), 
-                    courseElement.GetProperty("courseDepartment").GetString(), 
-                    courseElement.GetProperty("repeatStatus").GetString(), 
-                    courseElement.GetProperty("prereqs").GetString(), 
-                    courseElement.GetProperty("coreqs").GetString(), 
-                    courseElement.GetProperty("restrictions").GetString(), 
-                    courseElement.GetProperty("offered").GetString(),
-                    courseElement.GetProperty("completedPreReqs").GetBoolean(),
-                    courseElement.GetProperty("completedCoReqs").GetBoolean(),
-                    courseElement.GetProperty("id").GetString());
-
+                CourseModel course = CreateCourseObject(courseElement);
                 courses.Add(course);
             }
 
             terms.Add(new TermModel(termId, termName, termCredits, courses));
         }
 
-        _scheduleModel.Terms = terms;
+        _scheduleModel.SetTerms(terms);
 
         return Ok(new
         {

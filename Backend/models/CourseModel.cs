@@ -1,6 +1,3 @@
-using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
-
 public class CourseModel
 {
     public string Id { get; set; }
@@ -17,6 +14,7 @@ public class CourseModel
 
     public bool CompletedPreReqs { get; set; }
     public bool CompletedCoreqs { get; set; }
+    public bool InOfferedTerm { get; set; }
     private RequisitesHandler _requisitesHandler;
 
     public CourseModel(string shortName, string fullName, 
@@ -25,6 +23,7 @@ public class CourseModel
     string prerequisites, string corequisites, 
     string restrictions, string offeredTerms,
     bool completedPreReqs, bool completedCoreqs,
+    bool inOfferedTerm,
     string id = null)
     {
         ShortName = shortName;
@@ -39,6 +38,7 @@ public class CourseModel
         OfferedTerms = offeredTerms;
         CompletedPreReqs = completedPreReqs;
         CompletedCoreqs = completedCoreqs;
+        InOfferedTerm = inOfferedTerm;
         Id = id;
     }
     //GRABBING DIRECTLY FROM COURSEMODEL

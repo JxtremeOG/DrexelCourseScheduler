@@ -6,7 +6,7 @@ public class RequisitesHandler
     private readonly Regex _commaRegex = new Regex(@"(,\s+\)+)+");
     private readonly Regex _spacesRegex = new Regex(@"\s+");
 
-    private readonly Regex _splitRegex = new Regex(@"^(\(.*?\)|[A-Z]+\s\d+)\s+(and|or)\s+(.*)$");
+    private readonly Regex _splitRegex = new Regex(@"^(\(.*?\)|[A-Z0-9]+\s[0-9P]+)\s+(and|or)\s+(.*)$");
     private readonly Regex _parenthesesRegex = new Regex(@"^\([^()]*\)$");
 
     public string CleanRequisites(string requisites)

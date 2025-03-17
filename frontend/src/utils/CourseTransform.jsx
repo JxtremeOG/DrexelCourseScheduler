@@ -1,6 +1,7 @@
 // src/utils/courseTransform.js
 
 // Adjust the import path based on your project structure
+import { PiFlaskDuotone } from 'react-icons/pi';
 import { generateUniqueId } from './generateUniqueId';
 
 /**
@@ -14,4 +15,5 @@ export const transformCourse = (course) => ({
   id: course.id || generateUniqueId(), // Use existing id or generate a new one
   completedPreReqs: false,
   completedCoReqs: false,
+  inOfferedTerm: false
 });

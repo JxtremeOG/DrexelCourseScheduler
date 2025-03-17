@@ -1,7 +1,10 @@
 import React, { useState } from 'react'
 import ReactModal from 'react-modal'
+import LoadScheduleButton from './LoadScheduleButton'
 
-const StartSettings = ({ isStartModalOpen, setIsStartModalOpen, setTerms, sendTermsToBackend }) => {
+const StartSettings = ({ isStartModalOpen, setIsStartModalOpen, setTerms, sendTermsToBackend, terms }) => {
+
+    const [loadedSchedule, setLoadedSchedule] = useState(null)
 
     const schedules = [{
         id: 1,
@@ -23,31 +26,40 @@ const StartSettings = ({ isStartModalOpen, setIsStartModalOpen, setTerms, sendTe
         3: "Summer"
     }
 
-    const handleCreateSchedule = () => {
-        var tempTerms = []
-        var currentTerm = 0;
-        var trueTermIndex = 0;
-        tempTerms.push({
-                id: `term-pre`,
-                termName: `Pre-College`,
-                year: `<${startYear}`,
-                termCredits: "0.0",
-                courses: [],
-        })
-        for (let termIndex = 0; termIndex < numberOfTerms; termIndex++) {
-            trueTermIndex = parseInt(startTerm)+termIndex;
-            currentTerm = termDict[(parseInt(startTerm)+termIndex)%4];
-
+    const handleCreateSchedule = (loadedTerms) => {
+        console.log(loadedTerms)
+        if (loadedTerms === undefined) {
+            console.log("CREATING SCHEDULE")
+            var tempTerms = []
+            var currentTerm = 0;
+            var trueTermIndex = 0;
             tempTerms.push({
-                id: `term-${termIndex + 1}`,
-                termName: `${currentTerm}`,
-                year: `${parseInt(startYear) + parseInt(trueTermIndex / 4)}/${parseInt(startYear) + parseInt(trueTermIndex / 4) + 1}`,
-                termCredits: "0.0",
-                courses: [],
+                    id: `term-pre`,
+                    termName: `Pre-College`,
+                    year: `<${startYear}`,
+                    termCredits: "0.0",
+                    courses: [],
             })
+            for (let termIndex = 0; termIndex < numberOfTerms-1; termIndex++) {
+                trueTermIndex = parseInt(startTerm)+termIndex;
+                currentTerm = termDict[(parseInt(startTerm)+termIndex)%4];
+
+                tempTerms.push({
+                    id: `term-${termIndex + 1}`,
+                    termName: `${currentTerm}`,
+                    year: `${parseInt(startYear) + parseInt(trueTermIndex / 4)}/${parseInt(startYear) + parseInt(trueTermIndex / 4) + 1}`,
+                    termCredits: "0.0",
+                    courses: [],
+                })
+            }
+            setTerms(tempTerms)
+            sendTermsToBackend("Initializing schedule" ,tempTerms)
         }
-        setTerms(tempTerms)
-        sendTermsToBackend("Initializing schedule" ,tempTerms)
+        else {
+            console.log("LOADING SCHEDULE")
+            setTerms(loadedTerms)
+            sendTermsToBackend("Initializing schedule" ,loadedTerms)
+        }
         setIsStartModalOpen(false)
     }
 
@@ -89,9 +101,7 @@ const StartSettings = ({ isStartModalOpen, setIsStartModalOpen, setTerms, sendTe
                         </button>
                     ))}
                 </div>
-                <button className='bg-sky-800 p-2 rounded-md w-full h-12 mt-auto'>
-                    Load
-                </button>
+                <LoadScheduleButton handleCreateSchedule={handleCreateSchedule} />
             </div>
         </ReactModal>
     )

@@ -38,7 +38,7 @@ const SearchContainer = ({filteredResults, setFilteredResults, displayRemoveCour
         }
         else {
             results = coursesData.filter((course) =>
-                new RegExp(`^${value.toLowerCase()}.*`).test(course.shortName.toLowerCase()) || parseInt(value) ? course.shortName.includes(value) : false
+                new RegExp(`^${value.toLowerCase()}.*`).test(course.shortName.toLowerCase()) || parseInt(value) ? course.shortName.toLowerCase().includes(value.toLowerCase()) : false
             ).map((course) => ({
                 ...course,
                 id: generateUniqueId(), // Assign a new unique ID for each search
